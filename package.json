@@ -1,0 +1,10 @@
+{
+  "name": "touchdpad",
+  "version": "0.0.1",
+  "license": "MIT",
+  "amd": {},
+  "engine": "node ~0.10.15",
+  "devDependencies": {
+    "node-static": "~0.7.3"
+  }
+}

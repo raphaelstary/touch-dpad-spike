@@ -1,0 +1,26 @@
+/*jslint node: true */
+'use strict';
+
+module.exports = {
+    serve: {
+        summary: 'start a local web server for testing',
+
+        run: function (d, v, namedArgs, alternatePath) {
+            var PORT = 8080;
+            var PATH = alternatePath || '.';
+
+            var staticHttp = require('node-static');
+            var fileServer = new(staticHttp.Server)(PATH);
+            var simpleUserHash = 0;
+
+            var app = require('http').createServer(function (request, response) {
+                request.addListener('end', function () {
+                    fileServer.serve(request, response);
+                }).resume();
+            });
+
+            app.listen(PORT);
+            console.log("starting web server, serving folder '" + PATH + "' at http://localhost:" + PORT);
+        }
+    }
+};

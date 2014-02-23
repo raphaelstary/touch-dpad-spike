@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>dpad</title>
+    <style>
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+<canvas id="screen" width="500" height="500" style="border: 1px solid #000000"></canvas>
+<label for="xAxis">xAxis</label> <input id="xAxis" type="text">
+<label for="yAxis">yAxis</label> <input id="yAxis" type="text">
+<script>
+    var START_RADIUS = 10,
+            DPAD_RADIUS = 100,
+            END_RADIUS = 15,
+            PLAYER_RADIUS = 5;
+    var screen, ctx, middlePoint, endPoint, middlePointSet, startTouchId, xAxis, yAxis, player;
+
+    function touchStart(event) {
+        event.preventDefault();
+
+        if (middlePointSet)
+            return;
+
+        startTouchId = event.changedTouches[0].identifier;
+        middlePoint = {
+            x: event.changedTouches[0].clientX,
+            y: event.changedTouches[0].clientY
+        };
+
+        endPoint = {
+            x: middlePoint.x,
+            y: middlePoint.y
+        };
+
+        middlePointSet = true;
+    }
+
+    function touchMove(event) {
+        event.preventDefault();
+
+        for (var i = 0; i < event.changedTouches.length; i++) {
+            var touch = event.changedTouches[i];
+
+            if (touch.identifier === startTouchId) {
+                endPoint.x = touch.clientX;
+                endPoint.y = touch.clientY;
+                break;
+            }
+        }
+
+        updateAxes();
+    }
+
+    function updateAxes() {
+        var vector = {
+            x: endPoint.x - middlePoint.x,
+            y: endPoint.y - middlePoint.y
+        };
+
+        var magnitude = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
+
+        if (magnitude > DPAD_RADIUS) {
+            var theta = Math.atan2(vector.y, vector.x);
+            endPoint.x = middlePoint.x + DPAD_RADIUS * Math.cos(theta);
+            endPoint.y = middlePoint.y + DPAD_RADIUS * Math.sin(theta);
+
+            vector = {
+                x: endPoint.x - middlePoint.x,
+                y: endPoint.y - middlePoint.y
+            };
+        }
+
+        xAxis.value = vector.x / DPAD_RADIUS;
+        yAxis.value = vector.y / DPAD_RADIUS;
+    }
+
+
+    function touchEnd(event) {
+        event.preventDefault();
+
+        middlePointSet = false;
+
+        xAxis.value = 0;
+        yAxis.value = 0;
+    }
+
+    window.onload = function () {
+        screen = document.getElementById('screen');
+        ctx = screen.getContext('2d');
+        xAxis = document.getElementById('xAxis');
+        yAxis = document.getElementById('yAxis');
+
+        screen.addEventListener('touchstart', touchStart);
+        screen.addEventListener('touchmove', touchMove);
+        screen.addEventListener('touchend', touchEnd);
+
+        player = {x: screen.width / 2, y: screen.height / 2}
+        draw();
+    };
+
+    function draw() {
+        window.requestAnimationFrame(draw);
+
+        ctx.clearRect(0, 0, screen.width, screen.height);
+        updatePlayerPosition();
+        drawDPad();
+        drawPlayer();
+    }
+
+    function updatePlayerPosition() {
+        var x = player.x + Math.floor(xAxis.value * 10);
+        var y = player.y + Math.floor(yAxis.value * 10);
+        if (x < 0) {
+            x = 0;
+        }
+        if (y < 0) {
+            y = 0;
+        }
+        if (x > screen.width) {
+            x = screen.width;
+        }
+        if (y > screen.height) {
+            y = screen.height;
+        }
+
+        player.x = x;
+        player.y = y;
+    }
+
+    function drawPlayer () {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, PLAYER_RADIUS, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'grey';
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function drawDPad () {
+        if (!middlePointSet)
+            return;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(middlePoint.x, middlePoint.y, START_RADIUS, 0, 2 * Math.PI, false);
+        ctx.fillStyle = 'lightblue';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(endPoint.x, endPoint.y, END_RADIUS, 0, 2 * Math.PI, false);
+        ctx.strokeStyle = 'lightblue';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(middlePoint.x, middlePoint.y, DPAD_RADIUS, 0, 2 * Math.PI, false);
+        ctx.strokeStyle = 'lightgreen';
+        ctx.stroke();
+        ctx.restore();
+    }
+</script>
+</body>
+</html>
